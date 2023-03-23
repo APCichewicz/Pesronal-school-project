@@ -9,19 +9,21 @@ from datetime import datetime, time, timedelta
 
 class Truck:
     def __init__(self, map: Graph, time):
-        self.storage = Hash()  # Initialize a new hash table to store packages
-        self.travelled_distance = 0  # Initialize the total distance travelled to 0
-        self.route = None  # The truck's route is initially not defined
-        self.status_log = []  # Initialize a list to log status updates
-        self.time = time  # Set the current time for the truck
-        self.speed = 18  # Set the truck's speed to 18 miles per hour
-        self.map = map  # Set the map (graph) the truck will use for navigation
-        self.current_location = self.map.get_vertex("HUB")  # Set the truck's initial location to the HUB vertex
-        self.package_count = 0  # Initialize the number of packages on the truck to 0
-        self.delivered_packages = 0  # Initialize the number of delivered packages to 0
+        self.storage = Hash()
+        self.travelled_distance = 0
+        self.route = None
+        self.status_log = []
+        self.time = time
+        self.speed = 18
+        self.map = map
+        self.current_location = self.map.get_vertex("HUB")
+        self.package_count = 0
 
     def load(self, pkg):
         # Add package to the storage hash table with the destination as the key
+        # additionally, add an extra layer to the insertion such that if there is an address collision,
+        # instead of overwriting the value, append the new package to it so all
+        # packages at the same address are stored together
         temp = self.storage.get(pkg.destination)
         if temp:
             temp[1].append(pkg)
@@ -47,7 +49,7 @@ class Truck:
         # Update the package's status to 'Delivered' and adjust the package count and delivered_packages accordingly
         package.update_status((self.time, "Delivered"))
         self.package_count -= 1
-        self.delivered_packages += 1
+
 
     def get_deliverables(self, address):
         # Return the list of packages associated with the given address from the truck's storage hash table
@@ -74,14 +76,16 @@ class Truck:
                     is_priority = True
 
             vertex = self.map.get_vertex(addr)  # Get the vertex object for the address
-            distance = self.current_location.get_weight(vertex.id)  # Calculate the distance from the current location to the address
+            # Calculate the distance from the current location to the address
+            distance = self.current_location.get_weight(vertex.id)
 
             # Subtract 100 from the distance if the address contains a priority package
             if is_priority:
                 distance = distance - 100
 
             # Compare the calculated distance with the current minimum distance
-            # If the calculated distance is less than the minimum distance, update the minimum distance and the result (next location)
+            # If the calculated distance is less than the minimum distance,
+            # update the minimum distance and the result (next location)
             if distance < min_distance:
                 min_distance = distance
                 result = vertex
